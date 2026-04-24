@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hierarchy Engine</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #0b1248;
+        color: #e2e8f0;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 0.4rem;
+        color: #38bdf8;
+      }
+
+      .subtitle {
+        text-align: center;
+        font-size: 0.9rem;
+        color: #94a3b8;
+        margin-bottom: 2rem;
+      }
+
+      .container {
+        max-width: 860px;
+        margin: 0 auto;
+      }
+
+      textarea {
+        width: 100%;
+        height: 130px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        color: #e2e8f0;
+        padding: 1rem;
+        font-size: 0.95rem;
+        resize: vertical;
+        outline: none;
+        transition: border 0.2s;
+      }
+
+      textarea:focus {
+        border-color: #38bdf8;
+      }
+
+      .hint {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin-top: 0.4rem;
+        margin-bottom: 1rem;
+      }
+
+      button {
+        display: block;
+        width: 100%;
+        padding: 0.85rem;
+        background: #38bdf8;
+        color: #0f172a;
+        font-size: 1rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #7dd3fc;
+      }
+      button:disabled {
+        background: #334155;
+        color: #64748b;
+        cursor: not-allowed;
+      }
+
+      #error-box {
+        display: none;
+        background: #450a0a;
+        border: 1px solid #dc2626;
+        color: #fca5a5;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-top: 1.5rem;
+      }
+
+      #results {
+        margin-top: 2rem;
+      }
+
+      .meta-card {
+        background: #1e293b;
+        border-radius: 10px;
+        padding: 1rem 1.4rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .meta-item span:first-child {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        color: #64748b;
+        display: block;
+      }
+
+      .meta-item span:last-child {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #38bdf8;
+      }
+
+      .section-title {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 0.8rem;
+      }
+
+      .trees-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .tree-card {
+        background: #1e293b;
+        border-radius: 10px;
+        padding: 1rem;
+        border-left: 4px solid #38bdf8;
+      }
+
+      .tree-card.cycle {
+        border-left-color: #f87171;
+      }
+
+      .tree-card .root-label {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 0.4rem;
+      }
+
+      .tree-card .badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 99px;
+        font-weight: 600;
+        margin-bottom: 0.6rem;
+      }
+
+      .badge.tree-badge {
+        background: #0c4a6e;
+        color: #38bdf8;
+      }
+      .badge.cycle-badge {
+        background: #450a0a;
+        color: #f87171;
+      }
+
+      .tree-depth {
+        font-size: 0.82rem;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+      }
+
+      .tree-visual {
+        font-family: monospace;
+        font-size: 0.8rem;
+        color: #7dd3fc;
+        white-space: pre;
+        overflow-x: auto;
+      }
+
+      .tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .tag {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 0.82rem;
+        font-family: monospace;
+      }
+
+      .tag.invalid {
+        border-color: #dc2626;
+        color: #fca5a5;
+      }
+      .tag.dup {
+        border-color: #d97706;
+        color: #fcd34d;
+      }
+
+      .summary-box {
+        background: #1e293b;
+        border-radius: 10px;
+        padding: 1rem 1.4rem;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .summary-stat {
+        text-align: center;
+      }
+      .summary-stat .num {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #38bdf8;
+      }
+      .summary-stat .lbl {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Hierarchy Engine</h1>
+      <p class="subtitle">Visualize node hierarchies from edge strings</p>
+
+      <textarea
+        id="input"
+        placeholder="Enter edges separated by commas or newlines&#10;Example: A->B, A->C, B->D, X->Y, Y->Z, Z->X"
+      ></textarea>
+      <p class="hint">
+        Format: X->Y where X and Y are uppercase letters. Separate entries with
+        commas or new lines.
+      </p>
+
+      <button id="submitBtn" onclick="submitData()">Analyze Hierarchy</button>
+
+      <div id="error-box"></div>
+      <div id="results"></div>
+    </div>
+
+    <script>
+      function renderTree(node, obj, prefix, isLast) {
+        let out = prefix + (isLast ? "└── " : "├── ") + node + "\n";
+        const kids = Object.keys(obj);
+        kids.forEach((k, i) => {
+          const childPrefix = prefix + (isLast ? "    " : "│   ");
+          out += renderTree(k, obj[k], childPrefix, i === kids.length - 1);
+        });
+        return out;
+      }
+
+      function treeToString(root, treeObj) {
+        if (!treeObj || Object.keys(treeObj).length === 0)
+          return root + "\n(cycle — no tree)";
+        const kids = Object.keys(treeObj[root] || {});
+        let out = root + "\n";
+        kids.forEach((k, i) => {
+          out += renderTree(
+            k,
+            (treeObj[root] || {})[k],
+            "",
+            i === kids.length - 1,
+          );
+        });
+        return out;
+      }
+
+      async function submitData() {
+        const raw = document.getElementById("input").value.trim();
+        const errorBox = document.getElementById("error-box");
+        const results = document.getElementById("results");
+        const btn = document.getElementById("submitBtn");
+
+        errorBox.style.display = "none";
+        results.innerHTML = "";
+
+        if (!raw) {
+          errorBox.textContent = "Please enter at least one edge string.";
+          errorBox.style.display = "block";
+          return;
+        }
+
+        const entries = raw
+          .split(/[\n,]+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        btn.disabled = true;
+        btn.textContent = "Analyzing...";
+
+        try {
+          const resp = await fetch("/bfhl", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: entries }),
+          });
+
+          if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
+          const d = await resp.json();
+
+          let html = "";
+
+          html += `<div class="meta-card">
+          <div class="meta-item"><span>User ID</span><span>${d.user_id}</span></div>
+          <div class="meta-item"><span>Email</span><span>${d.email_id}</span></div>
+          <div class="meta-item"><span>Roll No.</span><span>${d.college_roll_number}</span></div>
+        </div>`;
+
+          html += `<p class="section-title">Hierarchies (${d.hierarchies.length})</p>`;
+          html += `<div class="trees-grid">`;
+          for (const h of d.hierarchies) {
+            const isCycle = h.has_cycle;
+            html += `<div class="tree-card ${isCycle ? "cycle" : ""}">
+            <div class="root-label">Root: ${h.root}</div>
+            <span class="badge ${isCycle ? "cycle-badge" : "tree-badge"}">${isCycle ? "⚠ Cycle" : "✓ Tree"}</span>
+            ${!isCycle ? `<div class="tree-depth">Depth: ${h.depth}</div>` : ""}
+            <div class="tree-visual">${treeToString(h.root, isCycle ? null : h.tree)}</div>
+          </div>`;
+          }
+          html += `</div>`;
+
+          if (d.invalid_entries && d.invalid_entries.length > 0) {
+            html += `<p class="section-title">Invalid Entries</p><div class="tag-row">`;
+            for (const e of d.invalid_entries)
+              html += `<span class="tag invalid">${e}</span>`;
+            html += `</div>`;
+          }
+
+          if (d.duplicate_edges && d.duplicate_edges.length > 0) {
+            html += `<p class="section-title">Duplicate Edges</p><div class="tag-row">`;
+            for (const e of d.duplicate_edges)
+              html += `<span class="tag dup">${e}</span>`;
+            html += `</div>`;
+          }
+
+          html += `<p class="section-title">Summary</p>
+        <div class="summary-box">
+          <div class="summary-stat"><div class="num">${d.summary.total_trees}</div><div class="lbl">Valid Trees</div></div>
+          <div class="summary-stat"><div class="num">${d.summary.total_cycles}</div><div class="lbl">Cycles</div></div>
+          <div class="summary-stat"><div class="num">${d.summary.largest_tree_root || "—"}</div><div class="lbl">Largest Tree Root</div></div>
+        </div>`;
+
+          results.innerHTML = html;
+        } catch (err) {
+          errorBox.textContent = "API call failed: " + err.message;
+          errorBox.style.display = "block";
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Analyze Hierarchy";
+        }
+      }
+    </script>
+  </body>
+</html>
