@@ -4,257 +4,640 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hierarchy Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <style>
-      * {
+      :root {
+        --bg: #0c0a07;
+        --surface: #131009;
+        --surface-2: #1a160d;
+        --surface-3: #211c10;
+        --border: rgba(255, 200, 80, 0.07);
+        --border-hover: rgba(255, 200, 80, 0.15);
+        --amber: #f59e0b;
+        --amber-dim: rgba(245, 158, 11, 0.12);
+        --amber-glow: rgba(245, 158, 11, 0.28);
+        --orange: #fb923c;
+        --orange-dim: rgba(251, 146, 60, 0.12);
+        --gold: #fcd34d;
+        --red: #f87171;
+        --red-dim: rgba(248, 113, 113, 0.1);
+        --rose: #fb7185;
+        --green: #4ade80;
+        --green-dim: rgba(74, 222, 128, 0.1);
+        --text-1: #fef3c7;
+        --text-2: #a8956a;
+        --text-3: #5a4a2f;
+        --radius: 12px;
+        --radius-sm: 8px;
+      }
+
+      *, *::before, *::after {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
 
       body {
-        font-family: "Segoe UI", sans-serif;
-        background: #0b1248;
-        color: #e2e8f0;
+        font-family: 'Outfit', sans-serif;
+        background: var(--bg);
+        color: var(--text-1);
         min-height: 100vh;
-        padding: 2rem;
+        padding: 3rem 1.5rem;
+        overflow-x: hidden;
       }
 
-      h1 {
-        text-align: center;
-        font-size: 2.5rem;
-        margin-bottom: 0.4rem;
-        color: #38bdf8;
+      /* ---- Background grid ---- */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(245, 158, 11, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(245, 158, 11, 0.04) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
       }
 
-      .subtitle {
-        text-align: center;
-        font-size: 0.9rem;
-        color: #94a3b8;
-        margin-bottom: 2rem;
+      body::after {
+        content: '';
+        position: fixed;
+        top: -200px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 700px;
+        height: 400px;
+        background: radial-gradient(ellipse, rgba(245, 158, 11, 0.07) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
       }
 
       .container {
         max-width: 860px;
         margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ---- Header ---- */
+      .header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        animation: fadeUp 0.6s ease both;
+      }
+
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--amber);
+        background: var(--amber-dim);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        padding: 5px 14px;
+        border-radius: 99px;
+        margin-bottom: 1rem;
+      }
+
+      .header-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        background: var(--amber);
+        border-radius: 50%;
+        box-shadow: 0 0 6px var(--amber);
+        animation: pulse 2s ease infinite;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 700;
+        color: var(--text-1);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        margin-bottom: 0.6rem;
+      }
+
+      h1 span {
+        background: linear-gradient(135deg, var(--amber), var(--orange));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .subtitle {
+        font-size: 0.95rem;
+        color: var(--text-2);
+        font-weight: 300;
+      }
+
+      /* ---- Input card ---- */
+      .input-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        animation: fadeUp 0.6s 0.1s ease both;
+        transition: border-color 0.2s;
+      }
+
+      .input-card:focus-within {
+        border-color: rgba(245, 158, 11, 0.3);
+      }
+
+      .input-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .input-label::before {
+        content: '';
+        width: 18px;
+        height: 1px;
+        background: var(--border-hover);
       }
 
       textarea {
         width: 100%;
-        height: 130px;
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 10px;
-        color: #e2e8f0;
+        height: 120px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text-1);
         padding: 1rem;
-        font-size: 0.95rem;
+        font-family: 'DM Mono', monospace;
+        font-size: 0.875rem;
         resize: vertical;
         outline: none;
-        transition: border 0.2s;
+        transition: border-color 0.2s, background 0.2s;
+        line-height: 1.7;
+      }
+
+      textarea::placeholder {
+        color: var(--text-3);
       }
 
       textarea:focus {
-        border-color: #38bdf8;
+        border-color: rgba(245, 158, 11, 0.4);
+        background: var(--surface-3);
       }
 
       .hint {
         font-size: 0.78rem;
-        color: #64748b;
-        margin-top: 0.4rem;
-        margin-bottom: 1rem;
+        color: var(--text-3);
+        margin-top: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        line-height: 1.5;
+      }
+
+      .hint-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--text-3);
+        flex-shrink: 0;
+      }
+
+      /* ---- Button ---- */
+      .btn-wrap {
+        animation: fadeUp 0.6s 0.2s ease both;
       }
 
       button {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
         width: 100%;
-        padding: 0.85rem;
-        background: #38bdf8;
-        color: #0f172a;
-        font-size: 1rem;
-        font-weight: 700;
-        border: none;
-        border-radius: 10px;
+        padding: 0.9rem;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 146, 60, 0.15));
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        border-radius: var(--radius);
+        color: var(--amber);
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s;
+        letter-spacing: 0.01em;
       }
 
-      button:hover {
-        background: #7dd3fc;
+      button:hover:not(:disabled) {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(251, 146, 60, 0.22));
+        border-color: rgba(245, 158, 11, 0.55);
+        box-shadow: 0 0 24px rgba(245, 158, 11, 0.14);
+        transform: translateY(-1px);
       }
+
+      button:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
       button:disabled {
-        background: #334155;
-        color: #64748b;
+        opacity: 0.4;
         cursor: not-allowed;
       }
 
-      #error-box {
-        display: none;
-        background: #450a0a;
-        border: 1px solid #dc2626;
-        color: #fca5a5;
-        padding: 1rem;
-        border-radius: 10px;
-        margin-top: 1.5rem;
+      .btn-icon {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
       }
 
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(245, 158, 11, 0.2);
+        border-top-color: var(--amber);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        flex-shrink: 0;
+      }
+
+      /* ---- Error ---- */
+      #error-box {
+        display: none;
+        background: var(--red-dim);
+        border: 1px solid rgba(248, 113, 113, 0.25);
+        color: var(--red);
+        padding: 1rem 1.25rem;
+        border-radius: var(--radius);
+        margin-top: 1.25rem;
+        font-size: 0.875rem;
+        align-items: center;
+        gap: 10px;
+        animation: fadeUp 0.3s ease both;
+      }
+
+      .error-icon {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+
+      /* ---- Results ---- */
       #results {
         margin-top: 2rem;
       }
 
+      /* ---- Meta card ---- */
       .meta-card {
-        background: #1e293b;
-        border-radius: 10px;
-        padding: 1rem 1.4rem;
-        margin-bottom: 1.5rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.75rem;
         display: flex;
-        gap: 2rem;
+        gap: 0.5rem;
         flex-wrap: wrap;
+        animation: fadeUp 0.4s ease both;
       }
 
-      .meta-item span:first-child {
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        color: #64748b;
-        display: block;
+      .meta-divider {
+        width: 1px;
+        background: var(--border);
+        margin: 0 0.5rem;
+        align-self: stretch;
       }
 
-      .meta-item span:last-child {
-        font-size: 1rem;
+      .meta-item {
+        flex: 1;
+        min-width: 130px;
+        padding: 0 0.75rem;
+      }
+
+      .meta-item:first-child { padding-left: 0; }
+
+      .meta-label {
+        font-size: 10px;
         font-weight: 600;
-        color: #38bdf8;
-      }
-
-      .section-title {
-        font-size: 0.8rem;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #64748b;
-        margin-bottom: 0.8rem;
+        letter-spacing: 0.1em;
+        color: var(--text-3);
+        margin-bottom: 4px;
       }
 
+      .meta-value {
+        font-family: 'DM Mono', monospace;
+        font-size: 0.875rem;
+        color: var(--text-1);
+      }
+
+      /* ---- Section heading ---- */
+      .section-heading {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-3);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .section-heading::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      /* ---- Trees grid ---- */
       .trees-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
         gap: 1rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
       }
 
       .tree-card {
-        background: #1e293b;
-        border-radius: 10px;
-        padding: 1rem;
-        border-left: 4px solid #38bdf8;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s, transform 0.2s;
+        animation: fadeUp 0.4s ease both;
       }
 
-      .tree-card.cycle {
-        border-left-color: #f87171;
+      .tree-card:hover {
+        border-color: var(--border-hover);
+        transform: translateY(-2px);
       }
 
-      .tree-card .root-label {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #f8fafc;
-        margin-bottom: 0.4rem;
+      .tree-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--amber), var(--orange));
+        opacity: 0.7;
       }
 
-      .tree-card .badge {
-        display: inline-block;
-        font-size: 0.7rem;
-        padding: 2px 8px;
-        border-radius: 99px;
+      .tree-card.cycle::before {
+        background: linear-gradient(90deg, var(--red), var(--rose));
+        opacity: 0.6;
+      }
+
+      .tree-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        gap: 8px;
+      }
+
+      .root-label {
+        font-size: 1rem;
         font-weight: 600;
-        margin-bottom: 0.6rem;
+        color: var(--text-1);
+        letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .root-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--amber);
+        box-shadow: 0 0 6px var(--amber-glow);
+        flex-shrink: 0;
+      }
+
+      .tree-card.cycle .root-dot {
+        background: var(--red);
+        box-shadow: 0 0 6px rgba(248, 113, 113, 0.4);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 99px;
+        flex-shrink: 0;
       }
 
       .badge.tree-badge {
-        background: #0c4a6e;
-        color: #38bdf8;
+        background: var(--amber-dim);
+        color: var(--amber);
+        border: 1px solid rgba(245, 158, 11, 0.25);
       }
+
       .badge.cycle-badge {
-        background: #450a0a;
-        color: #f87171;
+        background: var(--red-dim);
+        color: var(--red);
+        border: 1px solid rgba(248, 113, 113, 0.2);
       }
 
       .tree-depth {
-        font-size: 0.82rem;
-        color: #94a3b8;
-        margin-bottom: 0.5rem;
+        font-size: 12px;
+        color: var(--text-3);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .depth-bar {
+        display: flex;
+        gap: 3px;
+      }
+
+      .depth-pip {
+        width: 14px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--border-hover);
+      }
+
+      .depth-pip.active {
+        background: var(--amber);
+        opacity: 0.7;
       }
 
       .tree-visual {
-        font-family: monospace;
-        font-size: 0.8rem;
-        color: #7dd3fc;
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        color: var(--text-2);
         white-space: pre;
         overflow-x: auto;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0.75rem;
+        line-height: 1.7;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-hover) transparent;
       }
 
+      /* ---- Tags ---- */
       .tag-row {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.75rem;
       }
 
       .tag {
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 6px;
-        padding: 4px 10px;
-        font-size: 0.82rem;
-        font-family: monospace;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 4px 12px;
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        color: var(--text-2);
+        transition: border-color 0.15s;
       }
 
       .tag.invalid {
-        border-color: #dc2626;
-        color: #fca5a5;
+        background: var(--red-dim);
+        border-color: rgba(248, 113, 113, 0.25);
+        color: var(--red);
       }
+
       .tag.dup {
-        border-color: #d97706;
-        color: #fcd34d;
+        background: var(--amber-dim);
+        border-color: rgba(245, 158, 11, 0.25);
+        color: var(--gold);
       }
 
-      .summary-box {
-        background: #1e293b;
-        border-radius: 10px;
-        padding: 1rem 1.4rem;
-        display: flex;
-        gap: 2rem;
-        flex-wrap: wrap;
+      /* ---- Summary ---- */
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        animation: fadeUp 0.4s ease both;
       }
 
-      .summary-stat {
+      .summary-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1rem;
         text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s;
       }
-      .summary-stat .num {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #38bdf8;
+
+      .summary-card:hover {
+        border-color: var(--border-hover);
       }
-      .summary-stat .lbl {
-        font-size: 0.72rem;
+
+      .summary-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--amber), transparent);
+        opacity: 0.4;
+      }
+
+      .summary-num {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--text-1);
+        letter-spacing: -0.03em;
+        line-height: 1;
+        margin-bottom: 6px;
+        font-family: 'DM Mono', monospace;
+      }
+
+      .summary-lbl {
+        font-size: 10px;
+        font-weight: 600;
         text-transform: uppercase;
-        color: #64748b;
+        letter-spacing: 0.1em;
+        color: var(--text-3);
       }
+
+      /* ---- Animations ---- */
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      /* ---- Scrollbar ---- */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Hierarchy Engine</h1>
-      <p class="subtitle">Visualize node hierarchies from edge strings</p>
 
-      <textarea
-        id="input"
-        placeholder="Enter edges separated by commas or newlines&#10;Example: A->B, A->C, B->D, X->Y, Y->Z, Z->X"
-      ></textarea>
-      <p class="hint">
-        Format: X->Y where X and Y are uppercase letters. Separate entries with
-        commas or new lines.
-      </p>
+      <div class="header">
+        <div class="header-badge">Graph Analysis Tool</div>
+        <h1>Hierarchy <span>Engine</span></h1>
+        <p class="subtitle">Parse edge strings and visualize directed acyclic graphs in seconds</p>
+      </div>
 
-      <button id="submitBtn" onclick="submitData()">Analyze Hierarchy</button>
+      <div class="input-card">
+        <div class="input-label">Edge input</div>
+        <textarea
+          id="input"
+          placeholder="A->B, A->C, B->D&#10;X->Y, Y->Z, Z->X"
+        ></textarea>
+        <p class="hint">
+          <span class="hint-dot"></span>
+          Format: <code style="font-family:'DM Mono',monospace;font-size:0.8em;color:var(--amber)">X->Y</code>
+          with uppercase letters — separate entries with commas or new lines
+        </p>
+      </div>
 
-      <div id="error-box"></div>
+      <div class="btn-wrap">
+        <button id="submitBtn" onclick="submitData()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Analyze Hierarchy
+        </button>
+      </div>
+
+      <div id="error-box" style="display:none;">
+        <span class="error-icon">⚠</span>
+        <span id="error-text"></span>
+      </div>
+
       <div id="results"></div>
+
     </div>
 
     <script>
@@ -270,23 +653,28 @@
 
       function treeToString(root, treeObj) {
         if (!treeObj || Object.keys(treeObj).length === 0)
-          return root + "\n(cycle — no tree)";
+          return root + "\n(cycle detected — no tree)";
         const kids = Object.keys(treeObj[root] || {});
         let out = root + "\n";
         kids.forEach((k, i) => {
-          out += renderTree(
-            k,
-            (treeObj[root] || {})[k],
-            "",
-            i === kids.length - 1,
-          );
+          out += renderTree(k, (treeObj[root] || {})[k], "", i === kids.length - 1);
         });
         return out;
+      }
+
+      function depthPips(depth, max = 6) {
+        let html = '<div class="depth-bar">';
+        for (let i = 0; i < max; i++) {
+          html += `<div class="depth-pip ${i < depth ? 'active' : ''}"></div>`;
+        }
+        html += '</div>';
+        return html;
       }
 
       async function submitData() {
         const raw = document.getElementById("input").value.trim();
         const errorBox = document.getElementById("error-box");
+        const errorText = document.getElementById("error-text");
         const results = document.getElementById("results");
         const btn = document.getElementById("submitBtn");
 
@@ -294,8 +682,8 @@
         results.innerHTML = "";
 
         if (!raw) {
-          errorBox.textContent = "Please enter at least one edge string.";
-          errorBox.style.display = "block";
+          errorText.textContent = "Please enter at least one edge string to analyze.";
+          errorBox.style.display = "flex";
           return;
         }
 
@@ -303,8 +691,9 @@
           .split(/[\n,]+/)
           .map((s) => s.trim())
           .filter(Boolean);
+
         btn.disabled = true;
-        btn.textContent = "Analyzing...";
+        btn.innerHTML = '<div class="spinner"></div> Analyzing…';
 
         try {
           const resp = await fetch("/bfhl", {
@@ -318,53 +707,97 @@
 
           let html = "";
 
-          html += `<div class="meta-card">
-          <div class="meta-item"><span>User ID</span><span>${d.user_id}</span></div>
-          <div class="meta-item"><span>Email</span><span>${d.email_id}</span></div>
-          <div class="meta-item"><span>Roll No.</span><span>${d.college_roll_number}</span></div>
-        </div>`;
+          // Meta card
+          html += `
+          <div class="meta-card">
+            <div class="meta-item">
+              <div class="meta-label">User ID</div>
+              <div class="meta-value">${d.user_id}</div>
+            </div>
+            <div class="meta-divider"></div>
+            <div class="meta-item">
+              <div class="meta-label">Email</div>
+              <div class="meta-value">${d.email_id}</div>
+            </div>
+            <div class="meta-divider"></div>
+            <div class="meta-item">
+              <div class="meta-label">Roll No.</div>
+              <div class="meta-value">${d.college_roll_number}</div>
+            </div>
+          </div>`;
 
-          html += `<p class="section-title">Hierarchies (${d.hierarchies.length})</p>`;
+          // Trees
+          html += `<div class="section-heading">Hierarchies &nbsp;${d.hierarchies.length}</div>`;
           html += `<div class="trees-grid">`;
           for (const h of d.hierarchies) {
             const isCycle = h.has_cycle;
-            html += `<div class="tree-card ${isCycle ? "cycle" : ""}">
-            <div class="root-label">Root: ${h.root}</div>
-            <span class="badge ${isCycle ? "cycle-badge" : "tree-badge"}">${isCycle ? "⚠ Cycle" : "✓ Tree"}</span>
-            ${!isCycle ? `<div class="tree-depth">Depth: ${h.depth}</div>` : ""}
-            <div class="tree-visual">${treeToString(h.root, isCycle ? null : h.tree)}</div>
-          </div>`;
+            html += `
+            <div class="tree-card ${isCycle ? "cycle" : ""}">
+              <div class="tree-card-header">
+                <div class="root-label">
+                  <div class="root-dot"></div>
+                  Root: ${h.root}
+                </div>
+                <span class="badge ${isCycle ? "cycle-badge" : "tree-badge"}">
+                  ${isCycle ? "⚠ Cycle" : "✓ Tree"}
+                </span>
+              </div>
+              ${!isCycle ? `<div class="tree-depth">
+                Depth ${h.depth} &nbsp; ${depthPips(h.depth)}
+              </div>` : ""}
+              <div class="tree-visual">${treeToString(h.root, isCycle ? null : h.tree)}</div>
+            </div>`;
           }
           html += `</div>`;
 
+          // Invalid entries
           if (d.invalid_entries && d.invalid_entries.length > 0) {
-            html += `<p class="section-title">Invalid Entries</p><div class="tag-row">`;
+            html += `<div class="section-heading">Invalid Entries &nbsp;${d.invalid_entries.length}</div>`;
+            html += `<div class="tag-row">`;
             for (const e of d.invalid_entries)
               html += `<span class="tag invalid">${e}</span>`;
             html += `</div>`;
           }
 
+          // Duplicate edges
           if (d.duplicate_edges && d.duplicate_edges.length > 0) {
-            html += `<p class="section-title">Duplicate Edges</p><div class="tag-row">`;
+            html += `<div class="section-heading">Duplicate Edges &nbsp;${d.duplicate_edges.length}</div>`;
+            html += `<div class="tag-row">`;
             for (const e of d.duplicate_edges)
               html += `<span class="tag dup">${e}</span>`;
             html += `</div>`;
           }
 
-          html += `<p class="section-title">Summary</p>
-        <div class="summary-box">
-          <div class="summary-stat"><div class="num">${d.summary.total_trees}</div><div class="lbl">Valid Trees</div></div>
-          <div class="summary-stat"><div class="num">${d.summary.total_cycles}</div><div class="lbl">Cycles</div></div>
-          <div class="summary-stat"><div class="num">${d.summary.largest_tree_root || "—"}</div><div class="lbl">Largest Tree Root</div></div>
-        </div>`;
+          // Summary
+          html += `<div class="section-heading">Summary</div>`;
+          html += `
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-num">${d.summary.total_trees}</div>
+              <div class="summary-lbl">Valid Trees</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-num">${d.summary.total_cycles}</div>
+              <div class="summary-lbl">Cycles Found</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-num">${d.summary.largest_tree_root || "—"}</div>
+              <div class="summary-lbl">Largest Tree</div>
+            </div>
+          </div>`;
 
           results.innerHTML = html;
+
         } catch (err) {
-          errorBox.textContent = "API call failed: " + err.message;
-          errorBox.style.display = "block";
+          errorText.textContent = "API call failed: " + err.message;
+          errorBox.style.display = "flex";
         } finally {
           btn.disabled = false;
-          btn.textContent = "Analyze Hierarchy";
+          btn.innerHTML = `
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Analyze Hierarchy`;
         }
       }
     </script>
